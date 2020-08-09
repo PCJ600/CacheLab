@@ -47,39 +47,60 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
                 }
             }
         }
-    } else if(M == 64) {    /* 分块 4 * 4 非常难! */
-        int i, j, k, l;
-        int a1, a2, a3, a4, a5, a6, a7, a8;
-        // 先8 * 8分块，再分成4个4 * 4分块
-        for(i = 0; i < M; i += 8) {
-            for(j = 0; j < N; j += 8) {
-                for(k = i; k < i + 4; ++k) {
-                    a1 = A[k][j];
-                    a2 = A[k][j+1];
-                    a3 = A[k][j+2];
-                    a4 = A[k][j+3];
-                    a5 = A[k][j+4];
-                    a6 = A[k][j+5];
-                    a7 = A[k][j+6];
-                    a8 = A[k][j+7];
+    } else if(M == 64) {    /* 非常难! */
+        /*
+        int i, j, x, y;
+        int x1, x2, x3, x4, x5, x6, x7, x8;
+        for (i = 0; i < N; i += 8) {
+            for (j = 0; j < M; j += 8) {
+                for (x = i; x < i + 4; ++x) {
+                    x1 = A[x][j]; x2 = A[x][j+1]; x3 = A[x][j+2]; x4 = A[x][j+3];
+                    x5 = A[x][j+4]; x6 = A[x][j+5]; x7 = A[x][j+6]; x8 = A[x][j+7];
 
-                    B[j][k] = a1;
-                    B[j+1][k] = a2;
-                    B[j+2][k] = a3;
-                    B[j+3][k] = a4;
-                    
-                    B[j][k+4] = a5;
-                    B[j+1][k+4] = a6;
-                    B[j+2][k+4] = a7;
-                    B[j+3][k+4] = a8;
+                    B[j][x] = x1; B[j+1][x] = x2; B[j+2][x] = x3; B[j+3][x] = x4;
+                    B[j][x+4] = x5; B[j+1][x+4] = x6; B[j+2][x+4] = x7; B[j+3][x+4] = x8;
                 }
-                
+                for (y = j; y < j + 4; ++y) {
+                    x1 = A[i+4][y]; x2 = A[i+5][y]; x3 = A[i+6][y]; x4 = A[i+7][y];
+                    x5 = B[y][i+4]; x6 = B[y][i+5]; x7 = B[y][i+6]; x8 = B[y][i+7];
 
+                    B[y][i+4] = x1; B[y][i+5] = x2; B[y][i+6] = x3; B[y][i+7] = x4;
+                    B[y+4][i] = x5; B[y+4][i+1] = x6; B[y+4][i+2] = x7; B[y+4][i+3] = x8;
+                }
+                for (x = i + 4; x < i + 8; ++x) {
+                    x1 = A[x][j+4]; x2 = A[x][j+5]; x3 = A[x][j+6]; x4 = A[x][j+7];
+                    B[j+4][x] = x1; B[j+5][x] = x2; B[j+6][x] = x3; B[j+7][x] = x4;
+                }
+            }
+        }*/
 
+        // 4*4分块 1667 Misses
+        int i, j, l;
+        int a1, a2, a3, a4, a5, a6, a7, a8;
+        for(i = 0; i < M; i += 4) {
+            for(j = 0; j < N; j += 4) {
+                for(l = i; l < i + 4; l += 2) {
+                    a1 = A[l][j];
+                    a2 = A[l][j+1];
+                    a3 = A[l][j+2];
+                    a4 = A[l][j+3];
+                    a5 = A[l+1][j];
+                    a6 = A[l+1][j+1];
+                    a7 = A[l+1][j+2];
+                    a8 = A[l+1][j+3];
+
+                    B[j][l] = a1;
+                    B[j+1][l] = a2;
+                    B[j+2][l] = a3;
+                    B[j+3][l] = a4;
+                    B[j][l+1] = a5;
+                    B[j+1][l+1] = a6;
+                    B[j+2][l+1] = a7;
+                    B[j+3][l+1] = a8;
+                }
             }
         }
-
-    } else if(M == 61) {    /* 8*8分块, 64 * 56 */
+    } else if(M == 61) {    /* 8*8分块, 先处理64 * 56 */
         int i, j, a1, a2, a3, a4, a5, a6, a7, a8;
         for(j = 0; j < 56; j += 8) {
             for(i = 0; i < 64; ++i) {
